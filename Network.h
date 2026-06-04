@@ -21,6 +21,10 @@ class Network{
   //returns the derivative of the sigmoid function
   Eigen::VectorXd SigmoidPrime(const Eigen::VectorXd& z);
 
+  //returns nabla_B and nabla_W, parameters gradients
+  std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::MatrixXd>> Backprop(const Eigen::VectorXd& x, const Eigen::VectorXd& y);
+
+
   
 
 

@@ -32,6 +32,13 @@
     return result;
   }
 
+  //computes sigmoid prime 
+  Eigen::VectorXd Network::SigmoidPrime(const Eigen::VectorXd& z){
+    Eigen::ArrayXd tempSigmoid = Sigmoid(z).array();
+    return (tempSigmoid * (1 - tempSigmoid)).matrix();
+  }
+
+
   //return the output of the network when given certain inputs
   Eigen::VectorXd Network::FeedForward(Eigen::VectorXd a){
    
@@ -43,10 +50,36 @@
 
   }
 
-  //computes sigmoid prime 
-  Eigen::VectorXd Network::SigmoidPrime(const Eigen::VectorXd& z){
-    Eigen::ArrayXd tempSigmoid = Sigmoid(z).array();
-    return (tempSigmoid * (1 - tempSigmoid)).matrix();
+  //backpropagation algorithm, computes gradients for weights and biases
+  std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::MatrixXd>> Network::Backprop(const Eigen::VectorXd& x, const Eigen::VectorXd& y){
+   
+   //store weighted sums and activations at each layer during a forward pass.
+   std::vector<Eigen::VectorXd> temp_z;
+   std::vector<Eigen::VectorXd> temp_a;
+
+   //temp activations and Z
+   Eigen::VectorXd a(x);
+   
+   //push the first activation layer (input)
+   temp_a.push_back(a);
+   Eigen::VectorXd z;
+
+   for(int i = 0; i < num_layers-1; i++){
+    //compute Z vector for each layer, append to the list of Z, the same for activations
+     z = weights[i] * a + biases[i];
+     temp_z.push_back(z);
+     a = Sigmoid(z);
+     temp_a.push_back(a);
+   }
+
+
+
+
+
+
   }
 
+
+
+  
 
