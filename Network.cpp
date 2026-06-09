@@ -50,12 +50,17 @@
 
   }
 
-  //backpropagation algorithm, computes gradients for weights and biases
+  //backpropagation algorithm, computes gradients for weights and biases. returns nabla_b nabla_w
   std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::MatrixXd>> Network::Backprop(const Eigen::VectorXd& x, const Eigen::VectorXd& y){
    
    //store weighted sums and activations at each layer during a forward pass.
    std::vector<Eigen::VectorXd> temp_z;
    std::vector<Eigen::VectorXd> temp_a;
+
+
+   //store gradients
+   std::vector<Eigen::VectorXd> nabla_b;
+   std::vector<Eigen::MatrixXd> nabla_w;
 
    //temp activations and Z
    Eigen::VectorXd a(x);
@@ -64,22 +69,69 @@
    temp_a.push_back(a);
    Eigen::VectorXd z;
 
+   //initialize gradients to zeros
+   for(int i = 0; i < num_layers-1; i++){    
+     nabla_b.push_back(Eigen::VectorXd::Zero(biases[i].size()));
+     nabla_w.push_back(Eigen::MatrixXd::Zero(weights[i].rows(), weights[i].cols()));
+   }
+
+   //**forward pass** 
    for(int i = 0; i < num_layers-1; i++){
-    //compute Z vector for each layer, append to the list of Z, the same for activations
+     //compute Z vector for each layer, append to the list of Z, the same for activations
      z = weights[i] * a + biases[i];
      temp_z.push_back(z);
      a = Sigmoid(z);
      temp_a.push_back(a);
    }
 
-
-
-
-
+   //**Backward pass **/
+   
+   //compute outtermost error vector first
+   Eigen::VectorXd delta_a = ((temp_a.back() - y).array() * SigmoidPrime(temp_z.back()).array()).matrix(); //first operand computes dC/dA
+   nabla_b.back() = delta_a;
+   nabla_w.back() = delta_a * temp_a[num_layers-2].transpose();
+ 
+   for(int l = num_layers - 3; l >= 0; l--){
+     delta_a = ((weights[l+1].transpose() * delta_a).array() * SigmoidPrime(temp_z[l]).array()).matrix();
+     nabla_b[l] = delta_a;
+     nabla_w[l] = delta_a * temp_a[l].transpose();    
+   }
+   
+   return {nabla_b, nabla_w};
 
   }
 
+  //update weights and biases based on gradients and learning rate
+  void Network::UpdateMiniBatch(const std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& mini_batch, double eta){   
+   //store average gradients
+   std::vector<Eigen::VectorXd> average_nabla_b;
+   std::vector<Eigen::MatrixXd> average_nabla_w;
 
+   //initialize gradients to zeros
+   for(int i = 0; i < num_layers-1; i++){    
+     average_nabla_b.push_back(Eigen::VectorXd::Zero(biases[i].size()));
+     average_nabla_w.push_back(Eigen::MatrixXd::Zero(weights[i].rows(), weights[i].cols()));
+   }
+
+   //sum up gradients
+   for(int i = mini_batch.size() -1 ; i >= 0; i--){
+    auto gradients = Backprop(mini_batch[i].first, mini_batch[i].second);
+    
+    //aggregate gradients
+    for(int l = 0; i < num_layers-1; l++){    
+     average_nabla_b[l] += gradients.first[l];
+     average_nabla_w[l] += gradients.second[l];
+    }
+   }
+
+   //update weights
+   for(int i = 0; i < num_layers-1; i++){    
+     biases[i] -= (average_nabla_b[i] / mini_batch.size()) * eta;
+     weights[i] -= (average_nabla_w[i] / mini_batch.size()) * eta;
+   }
+  }
+    
+  
 
   
 

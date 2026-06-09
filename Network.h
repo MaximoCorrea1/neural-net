@@ -24,6 +24,11 @@ class Network{
   //returns nabla_B and nabla_W, parameters gradients
   std::pair<std::vector<Eigen::VectorXd>, std::vector<Eigen::MatrixXd>> Backprop(const Eigen::VectorXd& x, const Eigen::VectorXd& y);
 
+  //update weights and biases based on gradients and learning rate
+  void UpdateMiniBatch(
+    const std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& mini_batch,
+    double eta
+  );
 
   
 
