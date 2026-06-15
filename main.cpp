@@ -1,57 +1,45 @@
 #include <Eigen/Dense>
 #include <iostream>
+#include "Network.h"
 
-class Network{
- private :
-   int num_layers;
-   std::vector<int> sizes;
-   std::vector<Eigen::VectorXd> biases;
-   std::vector<Eigen::MatrixXd> weights;
+int main(){
+  Network net({2, 100, 2});
 
- 
-  public:
-  //initialize the network with random weights and biases 
-  Network(const std::vector<int>& sizes){
-    this->num_layers = sizes.size();
-    this->sizes = sizes;
+  std::cout << "Network created\n";
 
-    for(int i = 1; i < num_layers; i++){
-     //fill the biases with random values first 
-     Eigen::VectorXd tempBias = Eigen::VectorXd::Random(sizes[i]);
-     biases.push_back(tempBias);
+  std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> training_data;
 
-     //fill the weights with random values
-     Eigen::MatrixXd tempWeights = Eigen::MatrixXd::Random(sizes[i], sizes[i-1]);
-     weights.push_back(tempWeights);
-      
-    }
-  }
+  Eigen::VectorXd x1(4);
+  x1 << 0.0, 0.0, 1.0, 1.0;
 
-  //this Sigmoid returns the activation vector 
-  Eigen::VectorXd Sigmoid(const Eigen::VectorXd& z){
-    Eigen::VectorXd result(z.size());
+  Eigen::VectorXd y1(2);
+  y1 << 1.0, 1.0;
 
-    for (int i = 0; i < z.size(); i++){
-      double x = z(i);
-      result(i) = 1.0/(1.0 + std::exp(-x));
-    }
-    
-    return result;
-  }
+  training_data.push_back({x1, y1});
 
-  //return the output of the network when given certain inputs
-  Eigen::VectorXd FeedForward(Eigen::VectorXd a){
-   
-   for(int i = 0; i < num_layers-1; i++){
-    a = Sigmoid(weights[i] * a + biases[i]);
-   }
+  Eigen::VectorXd x2(4);
+  x2 << 1.0, 1.0, 0.0, 0.0;
 
-   return a;
+  Eigen::VectorXd y2(2);
+  y2 << 0.0, 1.0;
 
-  }
+  training_data.push_back({x2, y2});
 
+
+  //train network
+  net.SGD(training_data, 1, 1000, 0.2);
+
+  double net_loss = 0.0;
   
+  for(int i = 0; i < training_data.size(); i++){
+    Eigen::VectorXd result = net.FeedForward(training_data[i].first);
+    net_loss += (result - training_data[i].second).squaredNorm();
+  } 
 
+  net_loss /= training_data.size();
 
+  std::cout << "neural net loss: " << net_loss << "\n";
 
-};
+  return 0;
+}
+

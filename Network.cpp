@@ -1,6 +1,8 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include "Network.h"
+#include <algorithm>
+#include <random>
 
 
   //construct the class with random weights and biases
@@ -114,11 +116,11 @@
    }
 
    //sum up gradients
-   for(int i = mini_batch.size() -1 ; i >= 0; i--){
+   for(int i = 0 ; i < mini_batch.size(); i++){
     auto gradients = Backprop(mini_batch[i].first, mini_batch[i].second);
     
     //aggregate gradients
-    for(int l = 0; i < num_layers-1; l++){    
+    for(int l = 0; l < num_layers-1; l++){    
      average_nabla_b[l] += gradients.first[l];
      average_nabla_w[l] += gradients.second[l];
     }
@@ -130,6 +132,47 @@
      weights[i] -= (average_nabla_w[i] / mini_batch.size()) * eta;
    }
   }
+
+  //update net weights based training data
+  void Network::SGD(std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& training_data, int mini_batch_size, int epochs, double eta){
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+
+    int training_size = static_cast<int>(training_data.size());
+
+    if(mini_batch_size >= training_size) mini_batch_size = training_size;
+    if (training_size == 0) return;
+
+
+    //train
+    for(int i = 0; i < epochs; i++){ //outter loop trains foreach each epoch
+      std::cout << "Epoch " << i << " complete\n";
+      //shuffle training data
+      std::shuffle(training_data.begin(), training_data.end(), gen);
+
+      for(int j = 0; j < training_size; j+=mini_batch_size){//inner loop creates minibatch
+
+       int lastIndex = j + mini_batch_size;
+       if(lastIndex > training_size) lastIndex = training_size;
+
+       std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> mini_batch;
+       mini_batch.reserve(lastIndex-j);
+
+       for(int h = j; h < lastIndex; h++){
+        mini_batch.push_back(training_data[h]);
+       }
+
+       //minibatch created. update weights
+       UpdateMiniBatch(mini_batch, eta);
+
+      }
+
+    }
+
+  }
+
+  
     
   
 
