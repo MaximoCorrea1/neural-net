@@ -1,29 +1,71 @@
 #include <Eigen/Dense>
 #include <iostream>
 #include "Network.h"
+#include <fstream>
+
+//helper function to read ints written on bigendian
+int read_int_be(std::ifstream& file){
+    unsigned char b[4];
+    file.read(reinterpret_cast<char*>(b), 4);
+    return (b[0] << 24) | (b[1] << 16) | (b[2] << 8) | b[3];
+}
+
 
 int main(){
-  Network net({2, 100, 2});
+  Network net({4, 100, 2});
 
   std::cout << "Network created\n";
 
   std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> training_data;
 
-  Eigen::VectorXd x1(4);
-  x1 << 0.0, 0.0, 1.0, 1.0;
+  std::ifstream file("train-images-idx3-ubyte/train-images.idx3-ubyte", std::ios::binary);
 
-  Eigen::VectorXd y1(2);
-  y1 << 1.0, 1.0;
+  if(!file){
+    std::cerr << "could not open file\n";
+    return 1;
+  }
 
-  training_data.push_back({x1, y1});
+  int magic = read_int_be(file);
+  int num_img = read_int_be(file);
+  int rows = read_int_be(file);
+  int cols = read_int_be(file);
+  std::cout << magic << " " << num_img << " " << rows << " " << cols << "\n";
 
-  Eigen::VectorXd x2(4);
-  x2 << 1.0, 1.0, 0.0, 0.0;
+  unsigned char pixels[784];
+  file.read(reinterpret_cast<char*>(pixels), 784);
 
-  Eigen::VectorXd y2(2);
-  y2 << 0.0, 1.0;
+  for(int r = 0; r < rows; r++){
+    for(int c = 0; c < cols; c++){
+      if(pixels[(rows)*(r) + c] > 127){
+        std::cout << "#";
+      }else{
+        std::cout << " ";
+      }
+    }
+    std::cout << "\n";
+  }
 
-  training_data.push_back({x2, y2});
+  unsigned char pixels1[784];
+  file.read(reinterpret_cast<char*>(pixels1), 784);
+
+  for(int r = 0; r < rows; r++){
+    for(int c = 0; c < cols; c++){
+      if(pixels1[(rows)*(r) + c] > 127){
+        std::cout << "#";
+      }else{
+        std::cout << " ";
+      }
+    }
+    std::cout << "\n";
+  }
+
+
+
+
+
+
+ 
+
 
 
   //train network
