@@ -12,16 +12,16 @@ int read_int_be(std::ifstream& file){
 
 
 int main(){
-  Network net({4, 100, 2});
+  Network net({784, 30, 10});
 
   std::cout << "Network created\n";
 
   std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> training_data;
 
   std::ifstream file("train-images-idx3-ubyte/train-images.idx3-ubyte", std::ios::binary);
-
-  if(!file){
-    std::cerr << "could not open file\n";
+  std::ifstream fileLabels("train-labels-idx1-ubyte/train-labels.idx1-ubyte", std::ios::binary);
+  if(!file || !fileLabels){
+    std::cerr << "could not open file \n";
     return 1;
   }
 
@@ -29,47 +29,38 @@ int main(){
   int num_img = read_int_be(file);
   int rows = read_int_be(file);
   int cols = read_int_be(file);
-  std::cout << magic << " " << num_img << " " << rows << " " << cols << "\n";
 
-  unsigned char pixels[784];
-  file.read(reinterpret_cast<char*>(pixels), 784);
-
-  for(int r = 0; r < rows; r++){
-    for(int c = 0; c < cols; c++){
-      if(pixels[(rows)*(r) + c] > 127){
-        std::cout << "#";
-      }else{
-        std::cout << " ";
-      }
-    }
-    std::cout << "\n";
-  }
-
-  unsigned char pixels1[784];
-  file.read(reinterpret_cast<char*>(pixels1), 784);
-
-  for(int r = 0; r < rows; r++){
-    for(int c = 0; c < cols; c++){
-      if(pixels1[(rows)*(r) + c] > 127){
-        std::cout << "#";
-      }else{
-        std::cout << " ";
-      }
-    }
-    std::cout << "\n";
-  }
+  int magicLabel = read_int_be(fileLabels);
+  int numLabels = read_int_be(fileLabels);
 
 
+  std::cout << magic << " " << num_img << " " << rows << " " << cols << " " << "magicNumLabels:" << magicLabel << " numLabels:" << numLabels << "\n";
 
-
-
-
+  //save all images and labels
+  for(int i=0; i < num_img; i++){
+    //read pixel data
+    Eigen::VectorXd pixels(784);
+    unsigned char pixelsBytes[784];
+    file.read(reinterpret_cast<char*>(pixelsBytes), 784);
  
+    //read label data
+    Eigen::VectorXd label = Eigen::VectorXd::Zero(10);
+    unsigned char labelByte;
+    fileLabels.read(reinterpret_cast<char*>(&labelByte), 1);
+    label[labelByte] = 1;
 
+    //normalize pixel data
+    for(int j = 0; j < 784; j++){
+      pixels[j] = pixelsBytes[j] / 255.0;
+    }
+
+    training_data.push_back({pixels, label});
+  }
+  std::cout << "all images and labels loaded";
 
 
   //train network
-  net.SGD(training_data, 1, 1000, 0.2);
+  net.SGD(training_data, 10, 30, 3);
 
   double net_loss = 0.0;
   

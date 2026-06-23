@@ -3,12 +3,18 @@
 #include "Network.h"
 #include <algorithm>
 #include <random>
+#include <fstream>
 
 
   //construct the class with random weights and biases
   Network::Network(const std::vector<int>& sizes){
     this->num_layers = sizes.size();
     this->sizes = sizes;
+
+    
+
+
+
 
     for(int i = 1; i < num_layers; i++){
      //fill the biases with random values first 
@@ -172,7 +178,23 @@
 
   }
 
-  
+  //saves to <filename> netSize, sizes (length is netSize), weights as 8byte doubles, and finally biases.  
+  void Network::SaveWeights(std::string filename){
+   std::ofstream file(filename, std::ios::binary);
+   file.write(reinterpret_cast<char*>(&num_layers), sizeof(int));
+   file.write(reinterpret_cast<const char*>(sizes.data()), (num_layers * sizeof(int)));
+   
+
+   for(int i = 0; i < num_layers - 1; i++){
+      file.write(reinterpret_cast<const char*>(weights[i].data()), weights[i].size() * sizeof(double));
+   }
+   
+   for(int i = 0; i < num_layers - 1; i++){
+      file.write(reinterpret_cast<const char*>(biases[i].data()), biases[i].size() * sizeof(double));
+   }
+   
+   
+  }
     
   
 

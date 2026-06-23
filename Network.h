@@ -32,8 +32,9 @@ class Network{
 
   //update net weights based training data
   void SGD(std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& training_data, int mini_batch_size, int epochs, double eta);
+  //save weights
+  void SaveWeights(std::string filename);
 
-  
 
 
 
