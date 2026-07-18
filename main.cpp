@@ -70,7 +70,7 @@ int main(){
   std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>> test_data = load_data("t10k-images-idx3-ubyte/t10k-images.idx3-ubyte", "t10k-labels-idx1-ubyte/t10k-labels.idx1-ubyte");
 
   //train network
-  net.SGD(training_data, 10, 100, 3);
+  net.SGD(training_data, 10, 30, 0.3, 0.001, 0.9);
 
   //evaluate
   int correct = 0;

@@ -13,12 +13,18 @@
     this->sizes = sizes;
 
     for(int i = 1; i < num_layers; i++){
-     //fill the biases with random values first 
+     //fill the biases with random values first, and the biases velocities with zeros
      Eigen::VectorXd tempBias = Eigen::VectorXd::Random(sizes[i]);
+     Eigen::VectorXd tempVelBias = Eigen::VectorXd::Zero(sizes[i]);
+
+     biases_velocities.push_back(tempVelBias);
      biases.push_back(tempBias);
 
-     //fill the weights with random values
+     //fill the weights with random values, and the weights velocities with zeros
      Eigen::MatrixXd tempWeights = Eigen::MatrixXd::Random(sizes[i], sizes[i-1]);
+     Eigen::MatrixXd tempVelWeights = Eigen::MatrixXd::Zero(sizes[i], sizes[i-1]);
+
+     weights_velocities.push_back(tempVelWeights);
      weights.push_back(tempWeights);
       
     }
@@ -137,13 +143,13 @@
   }
 
   //update weights and biases based on gradients and learning rate
-  void Network2::UpdateMiniBatch(const std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& mini_batch, double eta, double decayRate, int training_size){   
+  void Network2::UpdateMiniBatch(const std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& mini_batch, double eta, double decayRate, int training_size, double momentum_coefficient){   
    
     //store average gradients
    std::vector<Eigen::VectorXd> average_nabla_b;
    std::vector<Eigen::MatrixXd> average_nabla_w;
 
-   //initialize gradients to zeros
+   //initialize average gradients to zeros
    for(int i = 0; i < num_layers-1; i++){    
      average_nabla_b.push_back(Eigen::VectorXd::Zero(biases[i].size()));
      average_nabla_w.push_back(Eigen::MatrixXd::Zero(weights[i].rows(), weights[i].cols()));
@@ -160,16 +166,20 @@
     }
    }
 
-   //update weights
-   for(int i = 0; i < num_layers-1; i++){    
-     biases[i] -= (average_nabla_b[i] / mini_batch.size()) * eta;
+   //update weights and velocities
+   for(int i = 0; i < num_layers-1; i++){ 
+     biases_velocities[i] = biases_velocities[i]*momentum_coefficient - (average_nabla_b[i] / mini_batch.size()) * eta;
+     weights_velocities[i] = weights_velocities[i]*momentum_coefficient - (average_nabla_w[i] / mini_batch.size()) * eta;
+    
+
+     biases[i] = biases[i] + biases_velocities[i];
      weights[i] *= (1 - ((eta * decayRate)/training_size)); //weight decay
-     weights[i] -= (average_nabla_w[i] / mini_batch.size()) * eta;
+     weights[i] = weights[i] + weights_velocities[i];
    }
   }
 
   //update net weights based training data
-  void Network2::SGD(std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& training_data, int mini_batch_size, int epochs, double eta, double decayRate){
+  void Network2::SGD(std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& training_data, int mini_batch_size, int epochs, double eta, double decayRate, double momentum_coefficient){
 
     std::random_device rd;
     std::mt19937 gen(rd());
@@ -199,7 +209,7 @@
        }
 
        //minibatch created. update weights
-       UpdateMiniBatch(mini_batch, eta, decayRate, training_size);
+       UpdateMiniBatch(mini_batch, eta, decayRate, training_size, momentum_coefficient);
 
       }
 

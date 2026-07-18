@@ -9,6 +9,11 @@ class Network2{
    std::vector<Eigen::VectorXd> biases;
    std::vector<Eigen::MatrixXd> weights;
 
+   std::vector<Eigen::VectorXd> biases_velocities;
+   std::vector<Eigen::MatrixXd> weights_velocities;
+
+
+
  
   public:
   //initialize the network with random weights and biases 
@@ -30,11 +35,11 @@ class Network2{
   //update weights and biases based on gradients and learning rate
   void UpdateMiniBatch(
     const std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& mini_batch,
-    double eta, double decayRate, int training_size
+    double eta, double decayRate, int training_size, double momentum_coefficient
   );
 
   //update net weights based training data
-  void SGD(std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& training_data, int mini_batch_size, int epochs, double eta, double decayRate);
+  void SGD(std::vector<std::pair<Eigen::VectorXd, Eigen::VectorXd>>& training_data, int mini_batch_size, int epochs, double eta, double decayRate, double momentum_coefficient);
   //save weights
   void SaveWeights(std::string filename);
 
